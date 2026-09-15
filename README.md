@@ -13,11 +13,16 @@ Prototype réalisé dans le cadre de l'évaluation *Interopérabilité en santé
 - Création d'un nouveau rendez-vous (`POST /Appointment`) — aucune donnée
   métier n'est codée en dur dans l'application.
 - Génère et affiche le message **HL7 v2 SIU^S12** correspondant à la
-  ressource FHIR sélectionnée ou créée.
+  ressource FHIR sélectionnée ou créée, avec une présentation « terminal »
+  qui rappelle volontairement qu'il s'agit d'un format hérité.
 - Affiche le mapping terminologique appliqué (code FHIR → code HL7 v2)
   pour le statut et le type de rendez-vous.
 - Journalise chaque échange FHIR (méthode, URL, statut, horodatage) pour
   la traçabilité, et affiche les erreurs serveur de façon explicite.
+- Un bouton dédié déclenche une requête volontairement invalide pour
+  démontrer la gestion d'erreur à la demande, sans attendre un incident.
+- Une checklist des 5 critères d'acceptation du cahier des charges
+  (section 1) se coche automatiquement au fil de la démonstration.
 
 ## Serveur FHIR utilisé
 

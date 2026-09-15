@@ -32,6 +32,7 @@ function bindEvents() {
   document.getElementById("btnSeedDemo").addEventListener("click", onSeedDemo);
   document.getElementById("btnSearchAppointments").addEventListener("click", onSearchAppointments);
   document.getElementById("createForm").addEventListener("submit", onCreateAppointment);
+  document.getElementById("btnTestError").addEventListener("click", onTestError);
 }
 
 function populateTypeOptions() {
@@ -58,6 +59,12 @@ function clearError() {
 }
 function setBusy(busy, label) {
   document.getElementById("busyIndicator").textContent = busy ? (label || "Chargement…") : "";
+}
+
+// -------------------------------------------------------- critères d'acceptation (CdC §1)
+function markCriterion(name) {
+  const el = document.querySelector(`.criterion[data-criterion="${name}"]`);
+  if (el) el.classList.add("met");
 }
 
 // ------------------------------------------------------------ 0. démo data
@@ -94,6 +101,7 @@ async function onSearchAppointments() {
     renderFhirRawView(bundle);
     updateStateFromBundle(bundle);
     document.getElementById("createSection").classList.remove("hidden");
+    markCriterion("search");
   } catch (err) {
     handleFhirError(err, "La recherche des rendez-vous a échoué.");
   } finally {
@@ -129,7 +137,7 @@ function renderAppointmentsList(bundle) {
   const container = document.getElementById("appointmentsList");
   const entries = (bundle.entry || []).map(e => e.resource);
   if (!entries.length) {
-    container.innerHTML = `<p class="muted">Aucun rendez-vous à venir pour ce patient.</p>`;
+    container.innerHTML = `<p class="empty-state">Aucun rendez-vous à venir pour ce patient. Utilisez le formulaire ci-dessous pour en créer un.</p>`;
     return;
   }
   container.innerHTML = "";
@@ -139,9 +147,10 @@ function renderAppointmentsList(bundle) {
     const statusInfo = mapAppointmentStatus(appt.status);
     const typeCoding = (appt.appointmentType && appt.appointmentType.coding && appt.appointmentType.coding[0]) || {};
     const typeInfo = mapAppointmentType(typeCoding.code);
+    const pillClass = `status-pill--${(appt.status || "pending").replace(/[^a-z-]/g, "")}`;
     card.innerHTML = `
       <div class="appt-card-header">
-        <span class="badge">${escapeHtml(appt.status)} → ${escapeHtml(statusInfo.code)}</span>
+        <span class="status-pill ${pillClass}">${escapeHtml(appt.status)} → ${escapeHtml(statusInfo.code)}</span>
         <span class="appt-date">${formatFrDateTime(appt.start)} \u2192 ${formatFrDateTime(appt.end)}</span>
       </div>
       <div class="appt-card-body">
@@ -149,7 +158,7 @@ function renderAppointmentsList(bundle) {
         <div><strong>Identifiant FHIR :</strong> <code>Appointment/${escapeHtml(appt.id)}</code></div>
       </div>
       <div class="appt-card-actions">
-        <button type="button" data-id="${escapeHtml(appt.id)}" class="btn-view">Voir ressource / conversion HL7 v2</button>
+        <button type="button" data-id="${escapeHtml(appt.id)}" class="btn-view secondary">Voir ressource / conversion HL7 v2</button>
       </div>
     `;
     container.appendChild(card);
@@ -215,7 +224,8 @@ async function onCreateAppointment(evt) {
     state.lastAppointment = created;
     renderFhirRawView(created);
     renderHl7View(created);
-    await onSearchAppointments(); // rafraîchit la vue métier avec le nouveau RDV
+    await onSearchAppointments(); // rafraîchit la vue métier avec le nouveau RDV (relecture GET)
+    markCriterion("create");
     window.scrollTo({ top: document.getElementById("view-hl7").offsetTop - 20, behavior: "smooth" });
   } catch (err) {
     handleFhirError(err, "La création du rendez-vous a échoué.");
@@ -247,12 +257,32 @@ function renderHl7View(appointment) {
     `;
     tbody.appendChild(tr);
   }
+  markCriterion("hl7");
+  markCriterion("mapping");
+}
+
+// -------------------------------------------------------- test volontaire d'une erreur
+async function onTestError() {
+  clearError();
+  setBusy(true, "Envoi d'une requête volontairement invalide…");
+  try {
+    await readAppointment("id-inexistant-demo-erreur");
+    showError("Le serveur a répondu sans erreur — essayez à nouveau plus tard (comportement inattendu pour cette démonstration).");
+  } catch (err) {
+    handleFhirError(err, "Erreur volontaire déclenchée pour démonstration : le serveur a refusé la requête, l'application ne plante pas");
+  } finally {
+    setBusy(false);
+  }
 }
 
 // -------------------------------------------------------- tracabilité
 function renderLog() {
   const container = document.getElementById("logList");
   container.innerHTML = "";
+  if (!requestLog.length) {
+    container.innerHTML = `<tr class="empty-row"><td colspan="5">Aucun échange pour l'instant.</td></tr>`;
+    return;
+  }
   for (const entry of requestLog) {
     const row = document.createElement("tr");
     row.className = entry.ok === false ? "log-error" : "log-ok";
@@ -276,6 +306,7 @@ function handleFhirError(err, context) {
   } else {
     showError(`${context} : ${err.message || err}`);
   }
+  markCriterion("error");
   console.error(err);
 }
 
