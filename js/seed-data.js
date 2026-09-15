@@ -22,9 +22,22 @@
 async function seedDemoData(onProgress) {
   const log = (msg) => { if (onProgress) onProgress(msg); };
 
+  // Jeton unique par exécution : le serveur public HAPI refuse de créer une
+  // ressource dont le contenu est un octet-pour-octet identique à une
+  // ressource déjà créée ("Can not create resource duplicating existing
+  // resource", HTTP 412) — attendu, puisque nos patients/praticien de démo
+  // n'avaient sinon aucun champ qui varie d'un lancement à l'autre. On
+  // ajoute donc un identifiant unique à chaque ressource de démonstration.
+  const runToken = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const demoIdentifier = (suffix) => ([{
+    system: "https://github.com/EyaRejeb/FHIR-interop/seed",
+    value: `${runToken}-${suffix}`,
+  }]);
+
   log("Création du patient de démonstration (1/2)…");
   const patientA = await createPatient({
     resourceType: "Patient",
+    identifier: demoIdentifier("patientA"),
     name: [{ family: "Martin", given: ["Eya-Demo"] }],
     gender: "female",
     birthDate: "1990-05-12",
@@ -33,6 +46,7 @@ async function seedDemoData(onProgress) {
   log("Création du patient de démonstration (2/2)…");
   const patientB = await createPatient({
     resourceType: "Patient",
+    identifier: demoIdentifier("patientB"),
     name: [{ family: "Diallo", given: ["Karim-Demo"] }],
     gender: "male",
     birthDate: "1978-11-03",
@@ -41,12 +55,14 @@ async function seedDemoData(onProgress) {
   log("Création du praticien de démonstration…");
   const practitioner = await fhirRequest("POST", "/Practitioner", {
     resourceType: "Practitioner",
+    identifier: demoIdentifier("practitioner"),
     name: [{ family: "Chatty", given: ["Luc"], prefix: ["Dr"] }],
   });
 
   log("Création du lieu de consultation…");
   const location = await fhirRequest("POST", "/Location", {
     resourceType: "Location",
+    identifier: demoIdentifier("location"),
     name: "Cabinet 3 — Cardiologie",
     status: "active",
   });

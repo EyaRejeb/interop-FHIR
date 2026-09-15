@@ -22,7 +22,7 @@ global.CustomEvent = function (name) { this.name = name; };
 
 const ctx = { console, document: global.document, CustomEvent: global.CustomEvent, Date, fetch: null };
 vm.createContext(ctx);
-for (const f of ["js/terminology.js", "js/appointment-builder.js", "js/hl7v2-mapper.js", "js/fhir-client.js"]) {
+for (const f of ["js/terminology.js", "js/appointment-builder.js", "js/hl7v2-mapper.js", "js/fhir-client.js", "js/seed-data.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), ctx, { filename: f });
 }
 
@@ -88,5 +88,36 @@ ok("mapping direct + repli (fallback) sur code non reconnu");
     ok("erreur FHIR correctement propagée avec message et statut HTTP");
   }
 
-  console.log(`\n=== ${passed}/5 groupes de tests réussis ===`);
+  console.log("\n6. Jeu de données de démonstration — pas de doublon entre deux exécutions");
+  // Reproduit le scenario du bug reel : HAPI refuse un POST dont le contenu
+  // est identique a une ressource deja creee (HTTP 412, "Can not create
+  // resource duplicating existing resource"). On simule un serveur qui
+  // echo le corps recu, capture les corps postes, et verifie que deux
+  // appels successifs de seedDemoData() envoient un Patient au contenu
+  // different (identifiant unique par execution).
+  let idCounter = 0;
+  const postedBodies = [];
+  ctx.fetch = async (_url, opts) => {
+    const body = JSON.parse(opts.body);
+    postedBodies.push(body);
+    return { ok: true, status: 201, json: async () => ({ ...body, id: `demo-${idCounter++}` }) };
+  };
+  vm.runInContext("globalThis.fetch = fetch;", ctx);
+
+  await ctx.seedDemoData();
+  const firstRunPatientBody = postedBodies.find(b => b.resourceType === "Patient");
+  postedBodies.length = 0;
+  await ctx.seedDemoData();
+  const secondRunPatientBody = postedBodies.find(b => b.resourceType === "Patient");
+
+  assert.ok(firstRunPatientBody.identifier && firstRunPatientBody.identifier[0].value, "identifiant manquant (run 1)");
+  assert.ok(secondRunPatientBody.identifier && secondRunPatientBody.identifier[0].value, "identifiant manquant (run 2)");
+  assert.notStrictEqual(
+    firstRunPatientBody.identifier[0].value,
+    secondRunPatientBody.identifier[0].value,
+    "deux executions ne devraient pas poster un Patient au contenu identique"
+  );
+  ok("deux exécutions successives postent des ressources dont le contenu diffère (plus de conflit 412)");
+
+  console.log(`\n=== ${passed}/6 groupes de tests réussis ===`);
 })();
