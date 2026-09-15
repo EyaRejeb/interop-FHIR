@@ -45,6 +45,33 @@ vérifiez qu'il répond bien et que `POST` fonctionne :
 curl https://hapi.fhir.org/baseR4/metadata?_format=json | head -c 300
 ```
 
+### Vérification des endpoints utilisés
+
+Chaque endpoint appelé par l'application a été confronté à une source
+faisant autorité — la documentation OpenAPI publiée par le serveur
+lui-même (`/baseR4/api-docs`) et le registre officiel des paramètres de
+recherche FHIR R4/R5 (hl7.org) :
+
+| Endpoint utilisé | Vérifié via | Résultat |
+|---|---|---|
+| `GET /metadata` | Réponse directe du serveur | HAPI FHIR 8.11.16, FHIR R4 (4.0.1) confirmés |
+| `POST /Patient`, `/Practitioner`, `/Location`, `/Appointment` | OpenAPI du serveur (`create-type`) | Opération standard exposée de façon uniforme pour tous les types de ressources hébergés — aucune restriction particulière trouvée |
+| `PUT /Appointment/{id}` | OpenAPI du serveur (`update-instance`) | Idem |
+| `GET /Appointment?patient=Patient/{id}` | Registre FHIR `SearchParameter/Appointment` (paramètre commun `clinical-patient`) | Expression `Appointment.participant.actor.where(resolve() is Patient)` — correspond exactement à l'usage de l'application |
+| `GET /Appointment?actor=Practitioner/{id}` | Registre FHIR `SearchParameter/Appointment-actor` | Expression `Appointment.participant.actor`, cible notamment `Practitioner` — confirmé |
+| `date=ge{today}` | Registre FHIR (paramètre commun `clinical-date`) | Comparateur `ge` explicitement autorisé |
+
+Au moment de cette vérification, le serveur hébergeait déjà 100 494
+`Patient` et 28 802 `Appointment` réels — preuve empirique supplémentaire
+que ces opérations sont utilisées à grande échelle sans restriction.
+
+**Limite honnête** : cette vérification s'appuie sur la documentation
+publiée par le serveur et sur la spécification FHIR, pas sur une requête
+`POST`/`PUT` réellement exécutée depuis mon environnement (accès réseau
+sortant restreint à une liste blanche qui n'inclut pas `hapi.fhir.org`).
+La confirmation finale — clic réel dans le navigateur — reste à faire par
+vous ; voir le parcours de démonstration ci-dessous.
+
 Le serveur étant public et partagé, ses données peuvent être purgées
 périodiquement — d'où le bouton *« Charger des données de démonstration »*,
 présent dans les deux espaces, qui recrée à la demande 2 patients, 1

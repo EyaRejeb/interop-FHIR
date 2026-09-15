@@ -24,8 +24,8 @@
     </div>
     <div class="header-right">
       <div class="header-badges">
-        <span class="badge-pill">FHIR R4</span>
-        <span class="badge-pill badge-pill--legacy">HL7 v2 SIU^S12</span>
+        <span class="badge-pill" title="Format d'échange de données de santé moderne, basé sur des API web (REST/JSON) — utilisé ici pour parler au serveur.">FHIR R4</span>
+        <span class="badge-pill badge-pill--legacy" title="Format de message texte plus ancien, encore très utilisé entre systèmes hospitaliers — l'application le génère à titre de conversion.">HL7 v2 SIU^S12</span>
       </div>
       <div id="connectedAs" class="connected-as hidden"></div>
       <button type="button" id="btnSwitchRole" class="secondary hidden">Changer d'espace</button>
@@ -75,7 +75,7 @@
     </ol>
     <div class="nav-divider"></div>
     <ol>
-      <li><a href="#" data-target="view-tech" class="nav-tech">Interopérabilité <span class="nav-tech-badge">FHIR/HL7</span></a></li>
+      <li><a href="#" data-target="view-tech" class="nav-tech" title="Ce que l'application échange réellement avec le serveur, en coulisses.">Interopérabilité <span class="nav-tech-badge">FHIR/HL7</span></a></li>
     </ol>
   </nav>
 
@@ -90,19 +90,24 @@
       <h2>Mes rendez-vous</h2>
       <p class="panel-lede">Connectez-vous avec votre identifiant patient pour voir vos rendez-vous à venir.</p>
 
+      <div class="quickstart">
+        <p class="quickstart-label">Nouveau ici ?</p>
+        <p class="quickstart-text">Créez un patient de test avec des rendez-vous déjà programmés, en un clic — aucune information à saisir.</p>
+        <button type="button" id="btnSeedDemo">Charger des données de démonstration</button>
+        <p id="seedResult" class="muted"></p>
+      </div>
+
       <div class="row">
-        <label for="patientIdInput">Identifiant patient (<code>Patient.id</code> FHIR)</label>
+        <label for="patientIdInput">Vous avez déjà un identifiant ? <code title="Identifiant technique attribué par le serveur FHIR au moment de la création du patient — pas un nom.">Patient.id</code></label>
         <div class="input-group">
           <input type="text" id="patientIdInput" placeholder="ex. 123456">
-          <button type="button" id="btnSearchAppointments">Voir mes rendez-vous</button>
-          <button type="button" id="btnSeedDemo" class="secondary">Charger des données de démonstration</button>
+          <button type="button" id="btnSearchAppointments" class="secondary">Voir mes rendez-vous</button>
         </div>
-        <p id="seedResult" class="muted"></p>
       </div>
 
       <h3>Rendez-vous à venir</h3>
       <div id="appointmentsList" class="appt-list">
-        <p class="empty-state">Renseignez un identifiant patient, ou chargez des données de démonstration pour voir le prototype en action immédiatement.</p>
+        <p class="empty-state">Vos rendez-vous s'afficheront ici après connexion.</p>
       </div>
     </section>
 
@@ -138,19 +143,24 @@
       <h2>Mon agenda</h2>
       <p class="panel-lede">Connectez-vous avec votre identifiant praticien pour voir les rendez-vous de tous vos patients.</p>
 
+      <div class="quickstart">
+        <p class="quickstart-label">Nouveau ici ?</p>
+        <p class="quickstart-text">Créez un praticien de test avec un agenda déjà rempli sur deux patients, en un clic.</p>
+        <button type="button" id="btnSeedDemoPro">Charger des données de démonstration</button>
+        <p id="agendaResult" class="muted"></p>
+      </div>
+
       <div class="row">
-        <label for="practitionerIdInput">Identifiant praticien (<code>Practitioner.id</code> FHIR)</label>
+        <label for="practitionerIdInput">Vous avez déjà un identifiant ? <code title="Identifiant technique attribué par le serveur FHIR au moment de la création du praticien — pas un nom.">Practitioner.id</code></label>
         <div class="input-group">
           <input type="text" id="practitionerIdInput" placeholder="ex. 789012">
-          <button type="button" id="btnSearchAgenda">Voir mon agenda</button>
-          <button type="button" id="btnSeedDemoPro" class="secondary">Charger des données de démonstration</button>
+          <button type="button" id="btnSearchAgenda" class="secondary">Voir mon agenda</button>
         </div>
-        <p id="agendaResult" class="muted"></p>
       </div>
 
       <h3>Rendez-vous à venir, tous patients confondus</h3>
       <div id="agendaList" class="appt-list">
-        <p class="empty-state">Renseignez un identifiant praticien, ou chargez des données de démonstration pour voir un agenda multi-patients immédiatement.</p>
+        <p class="empty-state">Votre agenda s'affichera ici après connexion.</p>
       </div>
     </section>
 
