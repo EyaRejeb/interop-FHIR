@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portail rendez-vous patient — Interopérabilité en santé (Sujet B)</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Portail rendez-vous patient</h1>
+  <p class="subtitle">Évaluation Interopérabilité en santé — Sujet B — Groupe Eya Rejeb &amp; Neirouz Attia</p>
+  <p class="server-info">Serveur FHIR utilisé : <code id="fhirBaseUrlLabel"></code> (R4)</p>
+</header>
+
+<main>
+
+  <div id="errorBanner" class="error-banner hidden" role="alert"></div>
+  <div id="busyIndicator" class="busy-indicator"></div>
+
+  <!-- ============================================================ -->
+  <section id="view-metier" class="panel">
+    <h2>1. Vue métier</h2>
+
+    <div class="row">
+      <label for="patientIdInput">Identifiant patient (FHIR <code>Patient.id</code>)</label>
+      <div class="input-group">
+        <input type="text" id="patientIdInput" placeholder="ex. 123456">
+        <button type="button" id="btnSearchAppointments">Rechercher mes rendez-vous</button>
+        <button type="button" id="btnSeedDemo" class="secondary">Charger des données de démonstration</button>
+      </div>
+      <p id="seedResult" class="muted"></p>
+    </div>
+
+    <h3>Mes rendez-vous à venir</h3>
+    <div id="appointmentsList" class="appt-list">
+      <p class="muted">Renseignez un identifiant patient puis cliquez sur « Rechercher », ou chargez des données de démonstration.</p>
+    </div>
+
+    <section id="createSection" class="hidden create-section">
+      <h3>Prendre un nouveau rendez-vous</h3>
+      <p id="createHint" class="muted"></p>
+      <form id="createForm">
+        <div class="form-grid">
+          <label>Date et heure
+            <input type="datetime-local" id="apptDate" required>
+          </label>
+          <label>Durée (minutes)
+            <input type="number" id="apptDuration" value="30" min="5" step="5" required>
+          </label>
+          <label>Type de rendez-vous
+            <select id="apptType"></select>
+          </label>
+          <label>Motif (optionnel)
+            <input type="text" id="apptReason" placeholder="ex. contrôle annuel">
+          </label>
+        </div>
+        <button type="submit" id="btnCreateAppointment" disabled>Créer le rendez-vous (POST /Appointment)</button>
+        <p id="createResult" class="muted"></p>
+      </form>
+    </section>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="view-fhir" class="panel">
+    <h2>2. Vue ressource FHIR brute</h2>
+    <p class="muted">Dernière ressource ou Bundle FHIR reçu du serveur, affiché tel quel (JSON).</p>
+    <pre id="fhirRawView" class="code-view">(aucune donnée pour l'instant)</pre>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="view-hl7" class="panel">
+    <h2>3. Vue conversion HL7 v2 (SIU^S12)</h2>
+    <p class="muted">Message HL7 v2 généré à partir de la ressource <code>Appointment</code> sélectionnée ou créée ci-dessus.</p>
+    <pre id="hl7View" class="code-view">(sélectionnez ou créez un rendez-vous pour voir la conversion)</pre>
+
+    <h2>4. Vue mapping terminologique</h2>
+    <table class="mapping-table">
+      <thead>
+        <tr>
+          <th>Champ FHIR</th>
+          <th>Valeur FHIR</th>
+          <th>Élément HL7 v2</th>
+          <th>Valeur HL7 v2</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody id="mappingTableBody"></tbody>
+    </table>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="view-log" class="panel">
+    <h2>Traçabilité des échanges FHIR</h2>
+    <p class="muted">Journal des requêtes envoyées au serveur FHIR (le plus récent en premier).</p>
+    <table class="log-table">
+      <thead>
+        <tr><th>Heure</th><th>Méthode</th><th>URL</th><th>Statut</th><th>Détail</th></tr>
+      </thead>
+      <tbody id="logList"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <p>Prototype pédagogique — dépôt : <a href="https://github.com/EyaRejeb/FHIR-interop">github.com/EyaRejeb/FHIR-interop</a></p>
+</footer>
+
+<script src="js/fhir-client.js"></script>
+<script src="js/terminology.js"></script>
+<script src="js/appointment-builder.js"></script>
+<script src="js/hl7v2-mapper.js"></script>
+<script src="js/seed-data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

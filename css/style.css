@@ -1,0 +1,152 @@
+:root {
+  --blue: #2f6fa8;
+  --blue-dark: #1f4e78;
+  --bg: #f7f7f5;
+  --panel-bg: #ffffff;
+  --border: #dedad0;
+  --text: #1a1a1a;
+  --muted: #666660;
+  --error-bg: #fbeaea;
+  --error-border: #a3312b;
+  --ok-bg: #eaf3de;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.app-header {
+  background: var(--blue-dark);
+  color: #fff;
+  padding: 1.2rem 2rem;
+}
+.app-header h1 { margin: 0 0 0.2rem 0; font-size: 1.5rem; }
+.app-header .subtitle { margin: 0; opacity: 0.9; font-size: 0.92rem; }
+.app-header .server-info { margin: 0.4rem 0 0 0; font-size: 0.85rem; opacity: 0.85; }
+.app-header code { background: rgba(255,255,255,0.15); padding: 0.1rem 0.4rem; border-radius: 4px; }
+
+main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.panel h2 { margin-top: 0; font-size: 1.15rem; color: var(--blue-dark); }
+.panel h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+.row { margin-bottom: 1rem; }
+.input-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.input-group input[type="text"] {
+  flex: 1; min-width: 180px; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px;
+}
+
+button {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+button:hover { background: var(--blue-dark); }
+button:disabled { background: #b7c8d6; cursor: not-allowed; }
+button.secondary { background: #7a7a72; }
+button.secondary:hover { background: #5c5c56; }
+
+.error-banner {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-border);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+.hidden { display: none !important; }
+
+.busy-indicator {
+  min-height: 1.2rem;
+  color: var(--blue-dark);
+  font-size: 0.88rem;
+  margin-bottom: 0.5rem;
+}
+
+.appt-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+.appt-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  background: #fcfcfa;
+}
+.appt-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+.appt-card-header .badge {
+  background: var(--ok-bg); border: 1px solid #639922; color: #27500a;
+  padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+}
+.appt-card-header .appt-date { font-weight: 600; }
+.appt-card-body { font-size: 0.9rem; margin-bottom: 0.5rem; }
+.appt-card-actions button { font-size: 0.82rem; padding: 0.4rem 0.7rem; }
+
+.create-section { margin-top: 1.2rem; border-top: 1px dashed var(--border); padding-top: 1rem; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.form-grid label { display: flex; flex-direction: column; font-size: 0.85rem; gap: 0.3rem; }
+.form-grid input, .form-grid select {
+  padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;
+}
+
+.code-view {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+table.mapping-table, table.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+table.mapping-table th, table.mapping-table td,
+table.log-table th, table.log-table td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+table.mapping-table th, table.log-table th {
+  background: #f0efe9;
+}
+table.log-table .log-url { font-family: monospace; font-size: 0.78rem; word-break: break-all; }
+table.log-table tr.log-error td { background: var(--error-bg); }
+table.log-table tr.log-ok td:nth-child(4) { color: #27500a; font-weight: 600; }
+
+.app-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  padding: 1.5rem;
+}
+.app-footer a { color: var(--blue); }
