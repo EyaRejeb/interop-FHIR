@@ -1,8 +1,9 @@
 /**
  * fhir-client.js
  * -----------------------------------------------------------------------
- * Client FHIR minimal (fetch natif, aucune dependance) pour le prototype
- * "Rendez-vous / calendrier patient" (Sujet B).
+ * Client FHIR minimal (fetch natif, aucune dependance) pour MediRDV
+ * (Sujet B — Rendez-vous / calendrier patient), utilise a la fois par
+ * l'espace patient et l'espace professionnel de sante.
  *
  * Serveur utilise : serveur de test public HAPI FHIR R4
  *   Base URL     : https://hapi.fhir.org/baseR4
@@ -107,6 +108,13 @@ async function searchAppointmentsForPatient(patientId) {
   return fhirRequest("GET", path);
 }
 
+/** GET /Appointment?actor=Practitioner/{id}&date=ge{today}&_sort=date -> Bundle (agenda professionnel) */
+async function searchAppointmentsForPractitioner(practitionerId) {
+  const today = new Date().toISOString().slice(0, 10);
+  const path = `/Appointment?actor=Practitioner/${encodeURIComponent(practitionerId)}&date=ge${today}&_sort=date&_count=30`;
+  return fhirRequest("GET", path);
+}
+
 /** GET /Appointment/{id} -> Appointment */
 async function readAppointment(id) {
   return fhirRequest("GET", `/Appointment/${encodeURIComponent(id)}`);
@@ -117,6 +125,17 @@ async function createAppointment(appointmentResource) {
   return fhirRequest("POST", "/Appointment", appointmentResource);
 }
 
+/**
+ * PUT /Appointment/{id} -> Appointment mis a jour.
+ * FHIR exige la representation complete de la ressource dans un PUT : on part
+ * donc de la ressource existante, on ne change que le statut, et on renvoie
+ * l'ensemble (utilise par l'espace professionnel : confirmer / annuler / clore).
+ */
+async function updateAppointmentStatus(appointment, newStatus) {
+  const updated = { ...appointment, status: newStatus };
+  return fhirRequest("PUT", `/Appointment/${encodeURIComponent(appointment.id)}`, updated);
+}
+
 /** POST /Patient -> Patient (utilise par le jeu de donnees de demonstration) */
 async function createPatient(patientResource) {
   return fhirRequest("POST", "/Patient", patientResource);
@@ -125,4 +144,9 @@ async function createPatient(patientResource) {
 /** GET /Patient/{id} -> Patient (verification d'existence) */
 async function readPatient(id) {
   return fhirRequest("GET", `/Patient/${encodeURIComponent(id)}`);
+}
+
+/** GET /Practitioner/{id} -> Practitioner (verification d'existence, espace professionnel) */
+async function readPractitioner(id) {
+  return fhirRequest("GET", `/Practitioner/${encodeURIComponent(id)}`);
 }

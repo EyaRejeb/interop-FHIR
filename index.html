@@ -3,39 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portail rendez-vous patient — Sujet B — Interopérabilité en santé</title>
+<title>MediRDV — Portail de rendez-vous — Sujet B — Interopérabilité en santé</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <a class="skip-link" href="#main">Aller au contenu</a>
 
-<header class="app-header">
+<header class="app-header" id="appHeader">
   <div class="header-inner">
-    <div class="header-titles">
-      <h1>Portail rendez-vous patient</h1>
-      <p class="subtitle">Interopérabilité en santé — Sujet B — Eya Rejeb &amp; Neirouz Attia</p>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="6" width="26" height="23" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 13h26" stroke="currentColor" stroke-width="2"/><path d="M10 3v6M22 3v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 20l3.5 3.5L17 17l2 2 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="header-titles">
+        <h1>MediRDV</h1>
+        <p class="subtitle">Interopérabilité en santé — Sujet B — Eya Rejeb &amp; Neirouz Attia</p>
+      </div>
     </div>
-    <div class="header-badges">
-      <span class="badge-pill">FHIR R4</span>
-      <span class="badge-pill badge-pill--legacy">HL7 v2 SIU^S12</span>
+    <div class="header-right">
+      <div class="header-badges">
+        <span class="badge-pill">FHIR R4</span>
+        <span class="badge-pill badge-pill--legacy">HL7 v2 SIU^S12</span>
+      </div>
+      <div id="connectedAs" class="connected-as hidden"></div>
+      <button type="button" id="btnSwitchRole" class="secondary hidden">Changer d'espace</button>
     </div>
   </div>
   <p class="server-info">Serveur FHIR : <code id="fhirBaseUrlLabel"></code></p>
 </header>
 
-<div class="layout">
-  <nav class="side-nav" aria-label="Sections du prototype">
+<!-- ================================================================= -->
+<!-- LANDING : choix de l'espace                                       -->
+<!-- ================================================================= -->
+<section id="landing" class="landing">
+  <div class="landing-inner">
+    <p class="landing-eyebrow">Prototype connecté à un vrai serveur FHIR</p>
+    <h2>Qui êtes-vous aujourd'hui ?</h2>
+    <p class="landing-lede">MediRDV sert deux publics avec le même socle FHIR : le patient qui gère ses rendez-vous, et le professionnel qui gère son agenda. Choisissez un espace pour commencer.</p>
+
+    <div class="role-cards">
+      <button type="button" class="role-card" data-role="patient">
+        <svg class="role-icon" viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="8" width="30" height="27" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 16h30" stroke="currentColor" stroke-width="2"/><path d="M13 5v6M27 5v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="25" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 33c1-3.5 4-5.5 6-5.5s5 2 6 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="role-name">Espace patient</span>
+        <span class="role-desc">Consultez vos rendez-vous à venir et prenez-en un nouveau en quelques clics.</span>
+      </button>
+
+      <button type="button" class="role-card" data-role="pro">
+        <svg class="role-icon" viewBox="0 0 40 40" aria-hidden="true"><rect x="9" y="6" width="22" height="29" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 6v-1a2 2 0 012-2h6a2 2 0 012 2v1" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13 16h4l2 5 3-9 2 4h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 26h14M13 30h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="role-name">Espace professionnel de santé</span>
+        <span class="role-desc">Gérez l'agenda de vos patients : confirmez, annulez ou clôturez un rendez-vous.</span>
+      </button>
+    </div>
+
+    <p class="landing-footnote">Aucune authentification réelle : un identifiant FHIR (<code>Patient.id</code> ou <code>Practitioner.id</code>) tient lieu de connexion pour cette démonstration. Pas d'identifiant sous la main ? Chaque espace propose de charger des données de test en un clic.</p>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- SHELL APPLICATIF                                                   -->
+<!-- ================================================================= -->
+<div class="layout hidden" id="appShell">
+  <nav class="side-nav" aria-label="Navigation">
+    <ol id="navPatient" class="hidden">
+      <li><a href="#" data-target="view-patient-home" class="nav-active">Mes rendez-vous</a></li>
+      <li><a href="#" data-target="view-patient-book">Prendre rendez-vous</a></li>
+    </ol>
+    <ol id="navPro" class="hidden">
+      <li><a href="#" data-target="view-pro-agenda" class="nav-active">Agenda</a></li>
+    </ol>
+    <div class="nav-divider"></div>
     <ol>
-      <li><a href="#view-metier"><span class="nav-num">1</span>Vue métier</a></li>
-      <li><a href="#view-fhir"><span class="nav-num">2</span>Ressource FHIR</a></li>
-      <li><a href="#view-hl7"><span class="nav-num">3</span>Conversion HL7 v2</a></li>
-      <li><a href="#view-mapping"><span class="nav-num">4</span>Mapping terminologique</a></li>
-      <li><a href="#view-log">Traçabilité</a></li>
-      <li><a href="#view-criteria">Critères d'acceptation</a></li>
+      <li><a href="#" data-target="view-tech" class="nav-tech">Interopérabilité <span class="nav-tech-badge">FHIR/HL7</span></a></li>
     </ol>
   </nav>
 
@@ -45,16 +85,16 @@
     <div id="busyIndicator" class="busy-indicator" aria-live="polite"></div>
 
     <!-- ============================================================ -->
-    <section id="view-metier" class="panel">
-      <p class="panel-eyebrow">1 · Vue métier</p>
-      <h2>Rendez-vous du patient</h2>
-      <p class="panel-lede">Recherchez les rendez-vous à venir d'un patient, ou prenez-en un nouveau. Chaque action déclenche un vrai appel au serveur FHIR — aucune donnée n'est codée en dur dans l'application.</p>
+    <section id="view-patient-home" class="view panel">
+      <p class="panel-eyebrow">Espace patient</p>
+      <h2>Mes rendez-vous</h2>
+      <p class="panel-lede">Connectez-vous avec votre identifiant patient pour voir vos rendez-vous à venir.</p>
 
       <div class="row">
         <label for="patientIdInput">Identifiant patient (<code>Patient.id</code> FHIR)</label>
         <div class="input-group">
           <input type="text" id="patientIdInput" placeholder="ex. 123456">
-          <button type="button" id="btnSearchAppointments">Rechercher mes rendez-vous</button>
+          <button type="button" id="btnSearchAppointments">Voir mes rendez-vous</button>
           <button type="button" id="btnSeedDemo" class="secondary">Charger des données de démonstration</button>
         </div>
         <p id="seedResult" class="muted"></p>
@@ -62,95 +102,95 @@
 
       <h3>Rendez-vous à venir</h3>
       <div id="appointmentsList" class="appt-list">
-        <p class="empty-state">Renseignez un identifiant patient puis cliquez sur « Rechercher », ou chargez des données de démonstration pour voir le prototype en action immédiatement.</p>
+        <p class="empty-state">Renseignez un identifiant patient, ou chargez des données de démonstration pour voir le prototype en action immédiatement.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="view-patient-book" class="view panel hidden">
+      <p class="panel-eyebrow">Espace patient</p>
+      <h2>Prendre un rendez-vous</h2>
+      <p id="createHint" class="panel-lede">Connectez-vous d'abord depuis « Mes rendez-vous » pour activer la prise de rendez-vous.</p>
+      <form id="createForm">
+        <div class="form-grid">
+          <label>Date et heure
+            <input type="datetime-local" id="apptDate" required>
+          </label>
+          <label>Durée (minutes)
+            <input type="number" id="apptDuration" value="30" min="5" step="5" required>
+          </label>
+          <label>Type de rendez-vous
+            <select id="apptType"></select>
+          </label>
+          <label>Motif <span class="optional">(optionnel)</span>
+            <input type="text" id="apptReason" placeholder="ex. contrôle annuel">
+          </label>
+        </div>
+        <button type="submit" id="btnCreateAppointment" disabled>Confirmer le rendez-vous</button>
+        <p class="form-note">Envoie <code>POST /Appointment</code> au serveur FHIR, puis relit la liste pour confirmer la création.</p>
+        <p id="createResult" class="muted"></p>
+      </form>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="view-pro-agenda" class="view panel hidden">
+      <p class="panel-eyebrow">Espace professionnel</p>
+      <h2>Mon agenda</h2>
+      <p class="panel-lede">Connectez-vous avec votre identifiant praticien pour voir les rendez-vous de tous vos patients.</p>
+
+      <div class="row">
+        <label for="practitionerIdInput">Identifiant praticien (<code>Practitioner.id</code> FHIR)</label>
+        <div class="input-group">
+          <input type="text" id="practitionerIdInput" placeholder="ex. 789012">
+          <button type="button" id="btnSearchAgenda">Voir mon agenda</button>
+          <button type="button" id="btnSeedDemoPro" class="secondary">Charger des données de démonstration</button>
+        </div>
+        <p id="agendaResult" class="muted"></p>
       </div>
 
-      <section id="createSection" class="hidden create-section">
-        <h3>Prendre un nouveau rendez-vous</h3>
-        <p id="createHint" class="muted"></p>
-        <form id="createForm">
-          <div class="form-grid">
-            <label>Date et heure
-              <input type="datetime-local" id="apptDate" required>
-            </label>
-            <label>Durée (minutes)
-              <input type="number" id="apptDuration" value="30" min="5" step="5" required>
-            </label>
-            <label>Type de rendez-vous
-              <select id="apptType"></select>
-            </label>
-            <label>Motif <span class="optional">(optionnel)</span>
-              <input type="text" id="apptReason" placeholder="ex. contrôle annuel">
-            </label>
-          </div>
-          <button type="submit" id="btnCreateAppointment" disabled>Créer le rendez-vous</button>
-          <p class="form-note">Envoie <code>POST /Appointment</code> au serveur FHIR, puis relit la liste pour confirmer la création.</p>
-          <p id="createResult" class="muted"></p>
-        </form>
-      </section>
+      <h3>Rendez-vous à venir, tous patients confondus</h3>
+      <div id="agendaList" class="appt-list">
+        <p class="empty-state">Renseignez un identifiant praticien, ou chargez des données de démonstration pour voir un agenda multi-patients immédiatement.</p>
+      </div>
     </section>
 
     <!-- ============================================================ -->
-    <section id="view-fhir" class="panel">
-      <p class="panel-eyebrow">2 · Ressource FHIR</p>
-      <h2>Donnée brute reçue du serveur</h2>
-      <p class="panel-lede">La dernière ressource ou le dernier <code>Bundle</code> FHIR renvoyé par le serveur, affiché sans transformation.</p>
-      <pre id="fhirRawView" class="code-view code-view--fhir">(aucune donnée pour l'instant — recherchez ou créez un rendez-vous)</pre>
-    </section>
+    <section id="view-tech" class="view panel panel--tech hidden">
+      <p class="panel-eyebrow">Interopérabilité</p>
+      <h2>Détails techniques FHIR ↔ HL7 v2</h2>
+      <p class="panel-lede">Ce que le prototype échange réellement avec le serveur — les vues attendues par le cahier des charges, accessibles depuis chaque rendez-vous.</p>
+      <p id="techCurrentLabel" class="tech-current">Aucun rendez-vous sélectionné pour l'instant — ouvrez-en un depuis « Mes rendez-vous » ou « Agenda ».</p>
 
-    <!-- ============================================================ -->
-    <section id="view-hl7" class="panel panel--legacy">
-      <p class="panel-eyebrow panel-eyebrow--legacy">3 · Conversion HL7 v2</p>
-      <h2>Message SIU^S12 généré</h2>
-      <p class="panel-lede">HL7 v2 est le format d'échange historique encore utilisé par la plupart des systèmes hospitaliers. Voici la ressource FHIR ci-dessus, traduite segment par segment.</p>
+      <h3>Ressource FHIR brute</h3>
+      <pre id="fhirRawView" class="code-view code-view--fhir">(aucune donnée pour l'instant)</pre>
+
+      <h3>Conversion HL7 v2 (SIU^S12)</h3>
       <div class="terminal">
         <div class="terminal-bar"><span></span><span></span><span></span><span class="terminal-label">SIU^S12 — sortie générée</span></div>
-        <pre id="hl7View" class="code-view code-view--hl7">(sélectionnez ou créez un rendez-vous pour voir la conversion)</pre>
+        <pre id="hl7View" class="code-view code-view--hl7">(sélectionnez un rendez-vous pour voir la conversion)</pre>
       </div>
-    </section>
 
-    <!-- ============================================================ -->
-    <section id="view-mapping" class="panel">
-      <p class="panel-eyebrow">4 · Mapping terminologique</p>
-      <h2>Correspondance code source → code cible</h2>
-      <p class="panel-lede">Chaque champ codé est traduit selon une convention documentée (voir le cahier des charges, section 5) — jamais improvisée à l'affichage.</p>
+      <h3>Mapping terminologique</h3>
       <table class="mapping-table">
         <thead>
-          <tr>
-            <th>Champ FHIR</th>
-            <th>Valeur FHIR</th>
-            <th>Élément HL7 v2</th>
-            <th>Valeur HL7 v2</th>
-            <th>Note</th>
-          </tr>
+          <tr><th>Champ FHIR</th><th>Valeur FHIR</th><th>Élément HL7 v2</th><th>Valeur HL7 v2</th><th>Note</th></tr>
         </thead>
         <tbody id="mappingTableBody">
-          <tr class="empty-row"><td colspan="5">En attente d'un rendez-vous sélectionné ou créé.</td></tr>
+          <tr class="empty-row"><td colspan="5">En attente d'un rendez-vous sélectionné.</td></tr>
         </tbody>
       </table>
-    </section>
 
-    <!-- ============================================================ -->
-    <section id="view-log" class="panel">
-      <p class="panel-eyebrow">Traçabilité</p>
-      <h2>Journal des échanges FHIR</h2>
-      <p class="panel-lede">Chaque requête envoyée au serveur, la plus récente en premier. Le bouton ci-dessous déclenche volontairement une requête invalide pour démontrer la gestion d'erreur, sans attendre un incident réel.</p>
+      <h3>Traçabilité des échanges FHIR</h3>
+      <p class="muted">Requêtes envoyées au serveur, la plus récente en premier.</p>
       <button type="button" id="btnTestError" class="secondary">Tester la gestion d'erreur (requête invalide volontaire)</button>
       <table class="log-table">
-        <thead>
-          <tr><th>Heure</th><th>Méthode</th><th>URL</th><th>Statut</th><th>Détail</th></tr>
-        </thead>
+        <thead><tr><th>Heure</th><th>Méthode</th><th>URL</th><th>Statut</th><th>Détail</th></tr></thead>
         <tbody id="logList">
           <tr class="empty-row"><td colspan="5">Aucun échange pour l'instant.</td></tr>
         </tbody>
       </table>
-    </section>
 
-    <!-- ============================================================ -->
-    <section id="view-criteria" class="panel panel--criteria">
-      <p class="panel-eyebrow">Vérification</p>
-      <h2>Critères d'acceptation (cahier des charges, §1)</h2>
-      <p class="panel-lede">Se coche automatiquement au fil de la démonstration — reflète l'état réel de la session en cours, pas une promesse figée.</p>
+      <h3>Critères d'acceptation (cahier des charges, §1)</h3>
       <ul class="criteria-list" id="criteriaList">
         <li data-criterion="search" class="criterion"><span class="criterion-check" aria-hidden="true"></span>La liste des RDV affichée provient réellement du serveur FHIR</li>
         <li data-criterion="create" class="criterion"><span class="criterion-check" aria-hidden="true"></span>Un RDV créé est persisté côté serveur, vérifié par relecture <code>GET</code></li>
