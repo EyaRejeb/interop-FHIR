@@ -67,15 +67,22 @@
 <div class="layout hidden" id="appShell">
   <nav class="side-nav" aria-label="Navigation">
     <ol id="navPatient" class="hidden">
-      <li><a href="#" data-target="view-patient-home" class="nav-active">Mes rendez-vous</a></li>
+      <li><a href="#" data-target="view-patient-home" class="nav-active"><span class="nav-num">1</span>Mes rendez-vous</a></li>
       <li><a href="#" data-target="view-patient-book">Prendre rendez-vous</a></li>
     </ol>
     <ol id="navPro" class="hidden">
-      <li><a href="#" data-target="view-pro-agenda" class="nav-active">Agenda</a></li>
+      <li><a href="#" data-target="view-pro-agenda" class="nav-active"><span class="nav-num">1</span>Agenda</a></li>
     </ol>
     <div class="nav-divider"></div>
     <ol>
-      <li><a href="#" data-target="view-tech" class="nav-tech" title="Ce que l'application échange réellement avec le serveur, en coulisses.">Interopérabilité <span class="nav-tech-badge">FHIR/HL7</span></a></li>
+      <li><a href="#" data-target="view-fhir"><span class="nav-num">2</span>Ressource FHIR</a></li>
+      <li><a href="#" data-target="view-hl7"><span class="nav-num">3</span>Conversion HL7 v2</a></li>
+      <li><a href="#" data-target="view-mapping"><span class="nav-num">4</span>Mapping terminologique</a></li>
+    </ol>
+    <div class="nav-divider"></div>
+    <ol>
+      <li><a href="#" data-target="view-log">Traçabilité</a></li>
+      <li><a href="#" data-target="view-criteria">Critères d'acceptation</a></li>
     </ol>
   </nav>
 
@@ -86,7 +93,7 @@
 
     <!-- ============================================================ -->
     <section id="view-patient-home" class="view panel">
-      <p class="panel-eyebrow">Espace patient</p>
+      <p class="panel-eyebrow">1 · Vue métier — Espace patient</p>
       <h2>Mes rendez-vous</h2>
       <p class="panel-lede">Connectez-vous avec votre identifiant patient pour voir vos rendez-vous à venir.</p>
 
@@ -105,7 +112,9 @@
         </div>
       </div>
 
-      <h3>Rendez-vous à venir</h3>
+      <div id="nextApptHero"></div>
+
+      <h3>Tous mes rendez-vous à venir</h3>
       <div id="appointmentsList" class="appt-list">
         <p class="empty-state">Vos rendez-vous s'afficheront ici après connexion.</p>
       </div>
@@ -139,7 +148,7 @@
 
     <!-- ============================================================ -->
     <section id="view-pro-agenda" class="view panel hidden">
-      <p class="panel-eyebrow">Espace professionnel</p>
+      <p class="panel-eyebrow">1 · Vue métier — Espace professionnel</p>
       <h2>Mon agenda</h2>
       <p class="panel-lede">Connectez-vous avec votre identifiant praticien pour voir les rendez-vous de tous vos patients.</p>
 
@@ -158,29 +167,40 @@
         </div>
       </div>
 
-      <h3>Rendez-vous à venir, tous patients confondus</h3>
+      <div id="agendaStats" class="agenda-stats hidden"></div>
+
       <div id="agendaList" class="appt-list">
         <p class="empty-state">Votre agenda s'affichera ici après connexion.</p>
       </div>
     </section>
 
     <!-- ============================================================ -->
-    <section id="view-tech" class="view panel panel--tech hidden">
-      <p class="panel-eyebrow">Interopérabilité</p>
-      <h2>Détails techniques FHIR ↔ HL7 v2</h2>
-      <p class="panel-lede">Ce que le prototype échange réellement avec le serveur — les vues attendues par le cahier des charges, accessibles depuis chaque rendez-vous.</p>
-      <p id="techCurrentLabel" class="tech-current">Aucun rendez-vous sélectionné pour l'instant — ouvrez-en un depuis « Mes rendez-vous » ou « Agenda ».</p>
-
-      <h3>Ressource FHIR brute</h3>
+    <section id="view-fhir" class="view panel panel--tech hidden">
+      <p class="panel-eyebrow">2 · Ressource FHIR</p>
+      <h2>Ressource FHIR brute</h2>
+      <p class="panel-lede">La ressource <code>Appointment</code> (ou le <code>Bundle</code> de recherche) réellement reçue du serveur, affichée sans transformation.</p>
+      <p id="techCurrentLabel1" class="tech-current">Aucun rendez-vous sélectionné pour l'instant — ouvrez-en un depuis « Mes rendez-vous » ou « Agenda ».</p>
       <pre id="fhirRawView" class="code-view code-view--fhir">(aucune donnée pour l'instant)</pre>
+    </section>
 
-      <h3>Conversion HL7 v2 (SIU^S12)</h3>
+    <!-- ============================================================ -->
+    <section id="view-hl7" class="view panel panel--tech hidden">
+      <p class="panel-eyebrow panel-eyebrow--legacy">3 · Conversion HL7 v2</p>
+      <h2>Message SIU^S12 généré</h2>
+      <p class="panel-lede">La ressource FHIR ci-dessus, traduite segment par segment vers le format hérité encore utilisé par la plupart des systèmes hospitaliers.</p>
+      <p id="techCurrentLabel2" class="tech-current">Aucun rendez-vous sélectionné pour l'instant — ouvrez-en un depuis « Mes rendez-vous » ou « Agenda ».</p>
       <div class="terminal">
         <div class="terminal-bar"><span></span><span></span><span></span><span class="terminal-label">SIU^S12 — sortie générée</span></div>
         <pre id="hl7View" class="code-view code-view--hl7">(sélectionnez un rendez-vous pour voir la conversion)</pre>
       </div>
+    </section>
 
-      <h3>Mapping terminologique</h3>
+    <!-- ============================================================ -->
+    <section id="view-mapping" class="view panel panel--tech hidden">
+      <p class="panel-eyebrow">4 · Mapping terminologique</p>
+      <h2>Correspondance code source → code cible</h2>
+      <p class="panel-lede">Chaque champ codé traduit selon une convention documentée (cahier des charges, section 5) — jamais improvisée à l'affichage.</p>
+      <p id="techCurrentLabel3" class="tech-current">Aucun rendez-vous sélectionné pour l'instant — ouvrez-en un depuis « Mes rendez-vous » ou « Agenda ».</p>
       <table class="mapping-table">
         <thead>
           <tr><th>Champ FHIR</th><th>Valeur FHIR</th><th>Élément HL7 v2</th><th>Valeur HL7 v2</th><th>Note</th></tr>
@@ -189,9 +209,13 @@
           <tr class="empty-row"><td colspan="5">En attente d'un rendez-vous sélectionné.</td></tr>
         </tbody>
       </table>
+    </section>
 
-      <h3>Traçabilité des échanges FHIR</h3>
-      <p class="muted">Requêtes envoyées au serveur, la plus récente en premier.</p>
+    <!-- ============================================================ -->
+    <section id="view-log" class="view panel hidden">
+      <p class="panel-eyebrow">Traçabilité</p>
+      <h2>Journal des échanges FHIR</h2>
+      <p class="panel-lede">Chaque requête envoyée au serveur, la plus récente en premier. Le bouton ci-dessous déclenche volontairement une requête invalide pour démontrer la gestion d'erreur, sans attendre un incident réel.</p>
       <button type="button" id="btnTestError" class="secondary">Tester la gestion d'erreur (requête invalide volontaire)</button>
       <table class="log-table">
         <thead><tr><th>Heure</th><th>Méthode</th><th>URL</th><th>Statut</th><th>Détail</th></tr></thead>
@@ -199,8 +223,13 @@
           <tr class="empty-row"><td colspan="5">Aucun échange pour l'instant.</td></tr>
         </tbody>
       </table>
+    </section>
 
-      <h3>Critères d'acceptation (cahier des charges, §1)</h3>
+    <!-- ============================================================ -->
+    <section id="view-criteria" class="view panel panel--criteria hidden">
+      <p class="panel-eyebrow">Vérification</p>
+      <h2>Critères d'acceptation (cahier des charges, §1)</h2>
+      <p class="panel-lede">Se coche automatiquement au fil de la démonstration.</p>
       <ul class="criteria-list" id="criteriaList">
         <li data-criterion="search" class="criterion"><span class="criterion-check" aria-hidden="true"></span>La liste des RDV affichée provient réellement du serveur FHIR</li>
         <li data-criterion="create" class="criterion"><span class="criterion-check" aria-hidden="true"></span>Un RDV créé est persisté côté serveur, vérifié par relecture <code>GET</code></li>

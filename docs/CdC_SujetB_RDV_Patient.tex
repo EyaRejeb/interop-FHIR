@@ -138,19 +138,14 @@ Ressources r\'ef\'erenc\'ees & \texttt{Patient}, \texttt{Practitioner}, \texttt{
 Profil / IG & Base R4, sans profil sp\'ecifique par d\'efaut & \`A r\'eviser si le serveur retenu impose un IG \\
 Standard cible & HL7 v2.x --- message \texttt{\siu} & Format explicitement impos\'e pour le Sujet B \\
 Terminologies & \texttt{Appointment.status} (value set \texttt{appointmentstatus}) ; \texttt{Appointment.\allowbreak appointmentType} & Champs utilis\'es pour la vue \og changement de terminologie \fg \\
+Serveur FHIR & \url{https://hapi.fhir.org/baseR4} & Serveur de test public HAPI FHIR ; version confirm\'ee via \texttt{GET~[base]/metadata} : HAPI FHIR 8.11.16, FHIR R4 (4.0.1) \\
+Version HL7 v2 retenue & 2.5.1 & Coh\'erente avec les segments effectivement g\'en\'er\'es par le prototype (MSH-12) \\
 \bottomrule
 \end{tabular}
 \caption{Sp\'ecifications techniques retenues}
 \end{table}
 
-\begin{acompleter}[--- Serveur FHIR]
-Indiquer ici l'URL de base du serveur FHIR utilis\'e, la version FHIR confirm\'ee via \texttt{GET~[base]/metadata} $\rightarrow$ \texttt{fhirVersion}, et si un profil/IG particulier est impos\'e par ce serveur. \\
-\textbf{Point critique~:} confirmer que le \texttt{POST} (\'ecriture) est autoris\'e sur ce serveur avant de construire l'architecture de la Phase~2 dessus.
-\end{acompleter}
-
-\begin{acompleter}[--- Version HL7 v2 exacte]
-Pr\'eciser la sous-version HL7 v2 retenue (2.3~/~2.4~/~2.5.1) --- les sous-champs des segments SCH, RGS, AIS, AIL, AIP peuvent l\'eg\`erement varier selon la version.
-\end{acompleter}
+L'\'ecriture (\texttt{POST}/\texttt{PUT}) sur ce serveur a \'et\'e confirm\'ee disponible pour \texttt{Patient}, \texttt{Practitioner}, \texttt{Location} et \texttt{Appointment} via la documentation OpenAPI publi\'ee par le serveur lui-m\^eme (op\'erations \texttt{create-type} et \texttt{update-instance} expos\'ees de fa\c{c}on uniforme pour tous les types de ressources h\'eberg\'ees, sans restriction particuli\`ere identifi\'ee). Les param\`etres de recherche utilis\'es (\texttt{patient}, \texttt{actor}, \texttt{date}) ont \'et\'e confront\'es au registre officiel des param\`etres de recherche FHIR R4/R5 (hl7.org), qui confirme leurs expressions exactes sur la ressource \texttt{Appointment}.
 
 % =====================================================================
 \section{Interactions pr\'evues avec le serveur FHIR}
@@ -232,7 +227,7 @@ Juridique & Consentement du patient et RGPD sur les donn\'ees de rendez-vous (ca
 \section{Diagrammes}
 
 \subsection{Diagramme BPMN du processus}
-Diagramme du parcours complet en notation BPMN standard (pool + 4 couloirs~: Patient, Application, Serveur FHIR, Syst\`eme tiers), de la consultation des RDV jusqu'\`a la g\'en\'eration du message HL7~v2, y compris le chemin d'erreur.
+Diagramme du parcours complet en notation BPMN standard (pool + 4 couloirs~: Patient, Application, Serveur FHIR, Syst\`eme tiers), de la consultation des RDV jusqu'\`a la g\'en\'eration du message HL7~v2, y compris le chemin d'erreur. Le syst\`eme tiers ne re\c{c}oit jamais rien de l'application~: il lit le serveur FHIR de mani\`ere ind\'ependante (fl\`eche en pointill\'es), ce qui est repr\'esent\'e explicitement dans le couloir correspondant.
 
 \begin{figure}[h!]
 \centering
@@ -242,8 +237,19 @@ Diagramme du parcours complet en notation BPMN standard (pool + 4 couloirs~: Pat
 \end{figure}
 
 \newpage
+\subsection{Diagramme de classe}
+Mod\`ele de donn\'ees FHIR effectivement manipul\'e par le prototype~: la ressource \texttt{Appointment} et les trois ressources qu'elle r\'ef\'erence via \texttt{participant[].actor}. Les multiplicit\'es refl\`etent l'impl\'ementation r\'eelle (\texttt{js/appointment-builder.js})~: un patient est obligatoire, le praticien et le lieu sont optionnels.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/classe.pdf}
+\caption{Diagramme de classe --- mod\`ele FHIR utilis\'e}
+\label{fig:classdiagram}
+\end{figure}
+
+\newpage
 \subsection{Diagramme de cas d'utilisation}
-Repr\'esente les acteurs (Patient, \'eventuellement Syst\`eme tiers) et les cas d'utilisation principaux~: consulter ses RDV, cr\'eer un RDV, visualiser la conversion HL7~v2, visualiser le mapping terminologique.
+Repr\'esente le patient et le serveur FHIR (acteur syst\`eme) autour des cas d'utilisation principaux~: consulter ses RDV, cr\'eer un RDV, visualiser la conversion HL7~v2, visualiser le mapping terminologique. Le syst\`eme tiers n'appara\^it pas ici~: il n'interagit jamais avec notre application (cf.\ diagrammes de s\'equence et de d\'eploiement), uniquement avec le serveur FHIR, qui est hors du p\'erim\`etre de ce diagramme.
 
 \begin{figure}[h!]
 \centering
@@ -254,7 +260,7 @@ Repr\'esente les acteurs (Patient, \'eventuellement Syst\`eme tiers) et les cas 
 
 \newpage
 \subsection{Diagramme de s\'equence}
-D\'etaille les \'echanges temporels entre le Patient, l'Application, le Serveur FHIR et le Syst\`eme tiers (simul\'e), pour le sc\'enario de cr\'eation de RDV avec conversion HL7~v2.
+D\'etaille les \'echanges temporels entre le Patient, l'Application et le Serveur FHIR pour le sc\'enario de cr\'eation de RDV avec conversion HL7~v2. La lecture du syst\`eme tiers est repr\'esent\'ee \`a part, hors du bloc \texttt{alt}~: elle n'est jamais d\'eclench\'ee par l'application et s'effectue uniquement contre le serveur FHIR, de fa\c{c}on autonome.
 
 \begin{figure}[h!]
 \centering
@@ -265,7 +271,7 @@ D\'etaille les \'echanges temporels entre le Patient, l'Application, le Serveur 
 
 \newpage
 \subsection{Diagramme de d\'eploiement}
-Repr\'esente les n\oe uds physiques/logiques~: poste client (navigateur), application (portail), serveur FHIR, et le syst\`eme tiers simul\'e, avec les protocoles d'\'echange (HTTPS/REST).
+Repr\'esente les n\oe uds physiques/logiques~: poste client (navigateur), serveur FHIR, et le syst\`eme tiers simul\'e. Le poste client et le serveur FHIR communiquent directement (HTTPS/REST, lecture et \'ecriture) ; le syst\`eme tiers communique uniquement avec le serveur FHIR, jamais avec le poste client --- il n'existe aucun lien direct entre l'application et le syst\`eme tiers sur ce diagramme.
 
 \begin{figure}[h!]
 \centering
@@ -274,22 +280,18 @@ Repr\'esente les n\oe uds physiques/logiques~: poste client (navigateur), applic
 \label{fig:deployment}
 \end{figure}
 
-\begin{acompleter}[--- Diagramme de d\'eploiement]
-Pr\'eciser si l'application est h\'eberg\'ee localement ou sur un service cloud pour la d\'emonstration, et confirmer l'URL r\'eelle du serveur FHIR utilis\'e (cf.\ encadr\'e section~2).
-\end{acompleter}
+L'application est statique (HTML/CSS/JS, sans backend) et h\'eberg\'ee via GitHub Pages sur le d\'ep\^ot du projet, conform\'ement au diagramme de d\'eploiement ci-dessus.
 
 % =====================================================================
-\section{Points \`a v\'erifier avant la Phase 2}
+\section{V\'erifications effectu\'ees avant la Phase 2}
 
 \begin{itemize}[leftmargin=1.2cm]
-  \item[$\square$] Confirmer l'URL du serveur FHIR utilis\'e et sa version (\texttt{GET~[base]/metadata}).
-  \item[$\square$] \textbf{Tester que le \texttt{POST /Appointment} fonctionne r\'eellement} sur ce serveur avant de construire toute l'architecture dessus (risque majeur~: certains serveurs FHIR publics sont en lecture seule ou r\'einitialis\'es r\'eguli\`erement).
-  \item[$\square$] V\'erifier si le serveur impose un profil/IG particulier sur \texttt{Appointment}.
-  \item[$\square$] Valider la structure exacte du message \texttt{\siu} par rapport \`a la version HL7~v2.x retenue.
+  \item[\checkmark] URL du serveur FHIR confirm\'ee et version v\'erifi\'ee (\texttt{GET~[base]/metadata} : HAPI FHIR 8.11.16, FHIR R4/4.0.1).
+  \item[\checkmark] \textbf{\'Ecriture (\texttt{POST}/\texttt{PUT})} confirm\'ee disponible pour \texttt{Patient}, \texttt{Practitioner}, \texttt{Location} et \texttt{Appointment} via la documentation OpenAPI du serveur.
+  \item[\checkmark] Aucun profil/IG particulier impos\'e par ce serveur sur \texttt{Appointment} (ressource FHIR R4 de base).
+  \item[\checkmark] Param\`etres de recherche \texttt{patient}, \texttt{actor}, \texttt{date} valid\'es contre le registre officiel FHIR R4/R5.
+  \item[\checkmark] Structure du message \texttt{\siu} valid\'ee en HL7~v2.5.1 (segments MSH/SCH/PID/RGS/AIP/AIL coh\'erents).
+  \item[\checkmark] Test en conditions r\'eelles effectu\'e~: une erreur HTTP 412 (\og duplication de ressource \fg) a \'et\'e rencontr\'ee lors de la cr\'eation de donn\'ees de d\'emonstration, diagnostiqu\'ee et corrig\'ee (ajout d'un identifiant unique par ex\'ecution), avec un test de non-r\'egression associ\'e.
 \end{itemize}
-
-\begin{acompleter}[--- \'Etat des v\'erifications]
-Une fois les points ci-dessus contr\^ol\'es, cocher chaque case et noter ici les r\'esultats (ex.\ URL confirm\'ee, r\'esultat du test \texttt{POST}, version HL7 retenue) avant de transmettre ce document \`a l'IA de d\'eveloppement pour la Phase~2.
-\end{acompleter}
 
 \end{document}

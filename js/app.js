@@ -3,13 +3,14 @@
  * -----------------------------------------------------------------------
  * Cablage de l'application MediRDV :
  *   - landing : choix de l'espace (patient / professionnel)
- *   - espace patient : mes rendez-vous + prise de rendez-vous
- *   - espace professionnel : agenda multi-patients + actions (confirmer/
- *     annuler/clore un RDV via PUT)
- *   - panneau "Interopérabilité" partagé par les deux espaces : les 4 vues
- *     exigees par le cahier des charges (metier deja couvert ci-dessus,
- *     ressource FHIR brute, conversion HL7 v2, mapping terminologique)
- *     + tracabilite + critères d'acceptation.
+ *   - espace patient : mes rendez-vous (avec mise en avant du prochain RDV)
+ *     + prise de rendez-vous
+ *   - espace professionnel : agenda multi-patients groupe par jour + actions
+ *     (confirmer/annuler/clore un RDV via PUT)
+ *   - les 4 vues exigees par le cahier des charges sont neatly separees en
+ *     sections distinctes, accessibles chacune depuis la navigation :
+ *     vue metier (ci-dessus), ressource FHIR brute, conversion HL7 v2,
+ *     mapping terminologique -- plus tracabilite et criteres d'acceptation.
  * -----------------------------------------------------------------------
  */
 
@@ -197,15 +198,48 @@ function refreshBookHint() {
 
 function renderAppointmentsList(bundle) {
   const container = document.getElementById("appointmentsList");
+  const hero = document.getElementById("nextApptHero");
   const entries = (bundle.entry || []).map(e => e.resource);
   if (!entries.length) {
     container.innerHTML = `<p class="empty-state">Aucun rendez-vous à venir. Utilisez « Prendre rendez-vous » dans le menu pour en créer un.</p>`;
+    hero.innerHTML = "";
     return;
   }
+  hero.innerHTML = "";
+  hero.appendChild(buildNextApptHero(entries[0]));
   container.innerHTML = "";
   for (const appt of entries) {
     container.appendChild(buildAppointmentCard(appt, { showPatient: false, showActions: false }));
   }
+}
+
+function buildNextApptHero(appt) {
+  const statusInfo = mapAppointmentStatus(appt.status);
+  const practitioner = (appt.participant || []).find(p => p.actor && p.actor.reference && p.actor.reference.startsWith("Practitioner/"));
+  const location = (appt.participant || []).find(p => p.actor && p.actor.reference && p.actor.reference.startsWith("Location/"));
+  const typeCoding = (appt.appointmentType && appt.appointmentType.coding && appt.appointmentType.coding[0]) || {};
+  const doctorName = (practitioner && practitioner.actor.display) || "Praticien";
+  const card = document.createElement("div");
+  card.className = "hero-card";
+  card.innerHTML = `
+    <div class="hero-avatar">${escapeHtml(initials(doctorName))}</div>
+    <div class="hero-body">
+      <p class="hero-label">Prochain rendez-vous</p>
+      <p class="hero-date">${formatFrDateTime(appt.start)}</p>
+      <p class="hero-doctor">${escapeHtml(doctorName)} ${location ? "— " + escapeHtml(location.actor.display || "") : ""}</p>
+      <p class="hero-type">${escapeHtml(typeCoding.display || typeCoding.code || "Consultation")}</p>
+    </div>
+    <span class="status-pill status-pill--${(appt.status || "pending").replace(/[^a-z-]/g, "")}">${escapeHtml(statusInfo.code)}</span>
+  `;
+  return card;
+}
+
+function initials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 /* ===================================================================
@@ -251,14 +285,43 @@ async function onSearchAgenda() {
 
 function renderAgendaList(bundle) {
   const container = document.getElementById("agendaList");
+  const stats = document.getElementById("agendaStats");
   const entries = (bundle.entry || []).map(e => e.resource);
   if (!entries.length) {
     container.innerHTML = `<p class="empty-state">Aucun rendez-vous à venir pour ce praticien.</p>`;
+    stats.classList.add("hidden");
     return;
   }
-  container.innerHTML = "";
+
+  const pendingCount = entries.filter(a => a.status === "pending").length;
+  stats.classList.remove("hidden");
+  stats.innerHTML = `
+    <div class="agenda-stat"><span class="agenda-stat-num">${entries.length}</span><span class="agenda-stat-label">rendez-vous à venir</span></div>
+    <div class="agenda-stat"><span class="agenda-stat-num">${pendingCount}</span><span class="agenda-stat-label">en attente de confirmation</span></div>
+  `;
+
+  const groups = new Map(); // "YYYY-MM-DD" -> [appt,...]
   for (const appt of entries) {
-    container.appendChild(buildAppointmentCard(appt, { showPatient: true, showActions: true }));
+    const key = (appt.start || "").slice(0, 10);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(appt);
+  }
+
+  container.innerHTML = "";
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const tomorrowKey = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  for (const [dateKey, appts] of groups) {
+    const heading = document.createElement("h3");
+    heading.className = "agenda-day-heading";
+    let label;
+    if (dateKey === todayKey) label = "Aujourd'hui";
+    else if (dateKey === tomorrowKey) label = "Demain";
+    else label = new Date(dateKey).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    heading.textContent = label;
+    container.appendChild(heading);
+    for (const appt of appts) {
+      container.appendChild(buildAppointmentCard(appt, { showPatient: true, showActions: true }));
+    }
   }
 }
 
@@ -268,7 +331,7 @@ async function onChangeStatus(appt, newStatus) {
   try {
     const updated = await updateAppointmentStatus(appt, newStatus);
     if (state.lastAppointment && state.lastAppointment.id === updated.id) {
-      openTechDetail(updated);
+      refreshTechViews(updated);
     }
     await onSearchAgenda();
   } catch (err) {
@@ -297,7 +360,7 @@ function buildAppointmentCard(appt, { showPatient, showActions }) {
       <span class="appt-date">${formatFrDateTime(appt.start)} \u2192 ${formatFrDateTime(appt.end)}</span>
     </div>
     <div class="appt-card-body">
-      ${showPatient && patientParticipant ? `<div><strong>Patient :</strong> ${escapeHtml(patientParticipant.actor.display || patientParticipant.actor.reference)}</div>` : ""}
+      ${showPatient && patientParticipant ? `<div class="appt-patient-row"><span class="avatar avatar--sm">${escapeHtml(initials(patientParticipant.actor.display || "?"))}</span><strong>${escapeHtml(patientParticipant.actor.display || patientParticipant.actor.reference)}</strong></div>` : ""}
       <div><strong>Type :</strong> ${escapeHtml(typeCoding.display || typeCoding.code || "non renseigné")} (HL7 v2 : ${escapeHtml(typeInfo.v2Code)})</div>
       <div><strong>Identifiant FHIR :</strong> <code>Appointment/${escapeHtml(appt.id)}</code></div>
     </div>
@@ -399,13 +462,19 @@ async function onCreateAppointment(evt) {
    =================================================================== */
 
 function openTechDetail(appt) {
+  refreshTechViews(appt);
+  showView("view-fhir");
+}
+
+function refreshTechViews(appt) {
   state.lastAppointment = appt;
   const statusInfo = mapAppointmentStatus(appt.status);
-  document.getElementById("techCurrentLabel").innerHTML =
-    `Rendez-vous inspecté : <code>Appointment/${escapeHtml(appt.id)}</code> — statut FHIR <code>${escapeHtml(appt.status)}</code> → HL7 v2 <code>${escapeHtml(statusInfo.code)}</code>`;
+  const label = `Rendez-vous inspecté : <code>Appointment/${escapeHtml(appt.id)}</code> — statut FHIR <code>${escapeHtml(appt.status)}</code> → HL7 v2 <code>${escapeHtml(statusInfo.code)}</code>`;
+  document.getElementById("techCurrentLabel1").innerHTML = label;
+  document.getElementById("techCurrentLabel2").innerHTML = label;
+  document.getElementById("techCurrentLabel3").innerHTML = label;
   renderFhirRawView(appt);
   renderHl7View(appt);
-  showView("view-tech");
 }
 
 function renderFhirRawView(resourceOrBundle) {

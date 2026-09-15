@@ -10,21 +10,26 @@ Application réalisée dans le cadre de l'évaluation *Interopérabilité en san
 
 MediRDV a deux espaces, choisis à l'écran d'accueil :
 
-- **Espace patient** — se connecter avec un identifiant patient, consulter
-  ses rendez-vous à venir, en prendre un nouveau.
+- **Espace patient** — se connecter avec un identifiant patient, voir son
+  prochain rendez-vous mis en avant puis la liste complète, en prendre un
+  nouveau.
 - **Espace professionnel de santé** — se connecter avec un identifiant
-  praticien, voir l'agenda de tous ses patients, confirmer / annuler / clore
-  un rendez-vous (`PUT /Appointment`).
+  praticien, voir l'agenda de tous ses patients groupé par jour (Aujourd'hui,
+  Demain...) avec un compteur de rendez-vous en attente, confirmer / annuler
+  / clore un rendez-vous (`PUT /Appointment`).
 
 Les deux espaces s'appuient sur le **même serveur FHIR réel**, sans donnée
-codée en dur. Un panneau **« Interopérabilité »**, accessible depuis chaque
-rendez-vous (dans les deux espaces), regroupe les vues exigées par le
-cahier des charges :
+codée en dur. Les 4 vues exigées par le cahier des charges sont volontairement
+**séparées dans la navigation**, chacune sa propre section, accessibles depuis
+chaque rendez-vous (dans les deux espaces) :
 
-- Ressource **FHIR brute** (JSON) réellement reçue du serveur.
-- Conversion en message **HL7 v2 SIU^S12**, présentée dans un bloc
-  « terminal » qui rappelle volontairement qu'il s'agit d'un format hérité.
-- **Mapping terminologique** appliqué (code FHIR → code HL7 v2).
+1. **Vue métier** — mes rendez-vous / mon agenda (ci-dessus).
+2. **Ressource FHIR brute** (JSON) réellement reçue du serveur.
+3. **Conversion HL7 v2 SIU^S12**, présentée dans un bloc « terminal » qui
+   rappelle volontairement qu'il s'agit d'un format hérité.
+4. **Mapping terminologique** appliqué (code FHIR → code HL7 v2).
+
+Deux sections complémentaires, aussi séparées dans la navigation :
 - **Traçabilité** : journal de tous les échanges FHIR (méthode, URL,
   statut, horodatage), avec un bouton pour déclencher une erreur
   volontaire et vérifier la gestion d'erreur à la demande.
@@ -109,7 +114,7 @@ python3 -m http.server 8000
 5. Revenir à l'accueil (**Changer d'espace**) → choisir **Espace patient**,
    coller l'identifiant patient noté à l'étape 2, consulter ses rendez-vous,
    puis **Prendre rendez-vous** pour démontrer le `POST`.
-6. Dans le panneau Interopérabilité, cliquer **Tester la gestion d'erreur**
+6. Dans la section « Traçabilité », cliquer **Tester la gestion d'erreur**
    pour démontrer ce critère sans attendre un incident réel.
 
 ## Tester la logique métier (hors-ligne, sans réseau)
@@ -134,13 +139,13 @@ js/terminology.js           tables de correspondance FHIR → HL7 v2 (documenté
 js/appointment-builder.js   construction d'une ressource Appointment
 js/hl7v2-mapper.js          génération du message HL7 v2 SIU^S12
 js/seed-data.js             jeu de données de démonstration (créé via POST réels)
-js/app.js                   interface : landing, espace patient, espace pro, panneau technique
+js/app.js                   interface : landing, espace patient, espace pro, 4 vues séparées
 tests/test-logic.js         tests hors-ligne de la logique métier
 ```
 
 Aucun backend, aucune base de données locale : l'application est un
 client FHIR REST pur exécuté dans le navigateur (cf. diagramme de
-déploiement du CdC). Les deux espaces et le panneau technique partagent
+déploiement du CdC). Les deux espaces et les vues techniques partagent
 le même client FHIR (`js/fhir-client.js`) et le même générateur HL7 v2
 (`js/hl7v2-mapper.js`) — pas de logique dupliquée entre les profils.
 
